@@ -1,0 +1,76 @@
+use serde::{Deserialize, Serialize};
+
+use super::LlmProvider;
+
+pub struct OllamaProvider {
+    url: String,
+    model: String,
+}
+
+impl OllamaProvider {
+    pub fn new(url: String, model: String) -> Self {
+        Self { url, model }
+    }
+}
+
+#[derive(Serialize)]
+struct ChatMessage {
+    role: &'static str,
+    content: String,
+}
+
+#[derive(Serialize)]
+struct ChatRequest {
+    model: String,
+    messages: Vec<ChatMessage>,
+    stream: bool,
+}
+
+#[derive(Deserialize)]
+struct ChatResponseMessage {
+    content: String,
+}
+
+#[derive(Deserialize)]
+struct ChatResponse {
+    message: ChatResponseMessage,
+}
+
+impl LlmProvider for OllamaProvider {
+    async fn summarize(
+        &self,
+        text: &str,
+        language: &str,
+        num_words: u32,
+    ) -> Result<String, String> {
+        let prompt = format!(
+            "Summarize the following TV series episodes in {language} in about {num_words} words. Preserve key plot points while keeping it concise:\n\n\"{text}\""
+        );
+
+        let response: ChatResponse = reqwest::Client::new()
+            .post(format!("{}/api/chat", self.url))
+            .json(&ChatRequest {
+                model: self.model.clone(),
+                messages: vec![ChatMessage {
+                    role: "user",
+                    content: prompt,
+                }],
+                stream: false,
+            })
+            .send()
+            .await
+            .map_err(|e| format!("Ollama summarization failed: {e}"))?
+            .error_for_status()
+            .map_err(|e| format!("Ollama summarization failed: {e}"))?
+            .json()
+            .await
+            .map_err(|e| format!("Ollama summarization failed: {e}"))?;
+
+        let summary = response.message.content.trim().to_string();
+        if summary.is_empty() {
+            Ok("No summary available".to_string())
+        } else {
+            Ok(summary)
+        }
+    }
+}
