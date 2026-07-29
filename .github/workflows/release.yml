@@ -51,7 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: recapp-desktop-v__VERSION__
-          releaseName: "Recapp Desktop v__VERSION__"
+          releaseName: "Recapp v__VERSION__"
           releaseBody: "See the assets below to download and install this version."
           releaseDraft: true
           prerelease: false
