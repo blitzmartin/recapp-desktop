@@ -27,7 +27,19 @@ Recapp doesn't ship with any API keys. You configure everything yourself from th
 
 Settings are stored locally on your machine (a JSON file in your OS's app config directory), nothing is sent anywhere except the request to TMDB and to your own local Ollama instance.
 
+## Installing a prebuilt release
+
+If you just want to use the app, download the installer for your OS from the [Releases page](https://github.com/blitzmartin/recapp-desktop/releases):
+
+- **macOS**: download the `.dmg`, open it, drag Recapp to Applications.
+- **Windows**: download the `.msi` or `.exe` and run it.
+- **Linux**: download the `.deb`, `.rpm`, or AppImage for your distro.
+
+You'll still need [Ollama](https://ollama.com) running locally with a model pulled, and a free [TMDB API key](https://www.themoviedb.org/settings/api) — see [What you need to provide](#what-you-need-to-provide) above.
+
 ## Development setup
+
+The following is only needed if you want to run Recapp from source or build it yourself.
 
 ### Prerequisites
 
@@ -57,3 +69,7 @@ This produces a native installer for the OS you run it on (`.app`/`.dmg` on macO
 
 - `src/` — React/TypeScript frontend (form UI, Settings screen)
 - `src-tauri/src/` — Rust backend: `tmdb.rs` (TMDB API client), `llm/` (summarization provider, currently Ollama), `translator/` (translation provider, currently Ollama), `settings.rs` (local config persistence), `commands.rs` (Tauri commands invoked from the frontend)
+
+## License
+
+[MIT](LICENSE)
