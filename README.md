@@ -1,12 +1,12 @@
 # Recapp Desktop
 
-Recapp is a small desktop app that catches you up on a TV show before you watch the next episode. Give it a series title, a season/episode, and a timerange, and it fetches the relevant episode synopses, summarizes them with a local LLM, and translates the result into the language you prefer.
+Recapp is a small desktop app that catches you up on a TV show before you watch the next episode. Give it a series title, a season/episode, a timerange and it fetches the relevant episode synopses, summarizes them with a local LLM and translates the result into the language you prefer.
 
-It's a native desktop port (built with [Tauri](https://tauri.app)) of an earlier web app. The frontend is React/TypeScript; the backend is Rust — there's no server, no REST API, no Node runtime involved.
+It's a native desktop port built with Tauri. The frontend is React/TypeScript; the backend is Rust. There's no server, no REST API, no Node runtime involved.
 
 ## What it does
 
-Given a series, a season/episode number, and a timerange, Recapp builds a recap:
+Given a series, a season/episode number, and a timerange, Recapp builds a recap (duh!):
 
 | Timerange | Behavior |
 | --- | --- |
@@ -19,13 +19,13 @@ For the two "until now" ranges, the collected synopses are summarized by an LLM 
 
 ## What you need to provide
 
-Recapp doesn't ship with any API keys — you configure everything yourself from the Settings screen (gear icon, top left):
+Recapp doesn't ship with any API keys. You configure everything yourself from the Settings screen (gear icon, top left):
 
 - **TMDB API key** (required). Recapp uses [The Movie Database](https://www.themoviedb.org/) for episode data. Get a free key at https://www.themoviedb.org/settings/api after creating an account.
-- **Ollama URL and model** (required for summarization/translation). Recapp currently uses [Ollama](https://ollama.com) running locally as its LLM provider — install it, pull a model (e.g. `ollama pull llama3`), and make sure it's running (`http://localhost:11434` by default) before generating a recap.
-- **Default language**. The language recaps are translated into. English needs no translation step; any other language routes through Ollama.
+- **Ollama URL and model** (required for summarization/translation). Recapp currently uses [Ollama](https://ollama.com) running locally as its LLM provider; install it, pull a model (e.g. `ollama pull gemma4`) and make sure it's running (`http://localhost:11434` by default) before generating a recap.
+- **Default language**. The language recaps are translated into. Default lang is English which needs no translation step; any other language routes through Ollama.
 
-Settings are stored locally on your machine (a JSON file in your OS's app config directory) — nothing is sent anywhere except to TMDB and to your own local Ollama instance.
+Settings are stored locally on your machine (a JSON file in your OS's app config directory), nothing is sent anywhere except the request to TMDB and to your own local Ollama instance.
 
 ## Development setup
 
@@ -33,7 +33,7 @@ Settings are stored locally on your machine (a JSON file in your OS's app config
 
 - [Node.js](https://nodejs.org/) 18+
 - [Rust](https://www.rust-lang.org/tools/install) (stable toolchain, via `rustup`)
-- Platform build tools for Tauri — see the [Tauri prerequisites guide](https://tauri.app/start/prerequisites/) for your OS (Xcode Command Line Tools on macOS, Build Tools for Visual Studio on Windows, standard dev packages on Linux)
+- Platform build tools for Tauri: see the [Tauri prerequisites guide](https://tauri.app/start/prerequisites/) for your OS (Xcode Command Line Tools on macOS, Build Tools for Visual Studio on Windows, standard dev packages on Linux)
 - [Ollama](https://ollama.com) running locally, with at least one model pulled
 
 ### Running locally
