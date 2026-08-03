@@ -47,7 +47,7 @@ Recapp isn't code-signed or notarized (that requires a paid Apple Developer acco
 3. Alternatively, right-click (or Control-click) the app in Finder and choose **Open**, then confirm in the dialog — this bypasses Gatekeeper for that app without touching system settings.
 4. If macOS says the app is "damaged and can't be opened" (Gatekeeper quarantine on a downloaded, unsigned app), clear the quarantine flag from Terminal:
    ```bash
-   xattr -cr /Applications/Recapp.app
+   xattr -cr /Applications/recapp-desktop.app
    ```
 
 **Windows:**
