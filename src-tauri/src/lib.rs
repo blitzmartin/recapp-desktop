@@ -1,5 +1,6 @@
 mod commands;
 mod llm;
+mod secrets;
 mod settings;
 mod tmdb;
 mod translator;
@@ -12,7 +13,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::generate_recap,
             settings::get_settings,
-            settings::save_settings
+            settings::save_settings,
+            secrets::set_llm_api_key,
+            secrets::has_llm_api_key,
+            secrets::delete_llm_api_key
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

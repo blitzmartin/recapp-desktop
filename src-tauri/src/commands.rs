@@ -1,4 +1,4 @@
-use crate::llm::{ollama::OllamaProvider, LlmProvider};
+use crate::llm;
 use crate::settings::AppSettings;
 use crate::tmdb;
 use crate::translator::{ollama::OllamaTranslator, Translator};
@@ -136,8 +136,8 @@ pub async fn generate_recap(
             let summary = if text_to_recap.is_empty() {
                 "No summary available".to_string()
             } else {
-                let llm = OllamaProvider::new(settings.ollama_url.clone(), settings.ollama_model.clone());
-                let recapped_text = llm.summarize(&text_to_recap, "en", 100).await.map_err(|e| {
+                let provider = llm::build_provider(&settings)?;
+                let recapped_text = provider.summarize(&text_to_recap, "en", 100).await.map_err(|e| {
                     eprintln!("[generate_recap] errore riassunto LLM: {e}");
                     e
                 })?;
