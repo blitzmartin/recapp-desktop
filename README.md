@@ -37,6 +37,24 @@ If you just want to use the app, download the installer for your OS from the [Re
 
 You'll still need [Ollama](https://ollama.com) running locally with a model pulled, and a free [TMDB API key](https://www.themoviedb.org/settings/api) — see [What you need to provide](#what-you-need-to-provide) above.
 
+### "Unidentified developer" / "Windows protected your PC" warnings
+
+Recapp isn't code-signed or notarized (that requires a paid Apple Developer account and a Windows code-signing certificate), so both macOS and Windows will flag the installer as coming from an unknown publisher. This is expected — here's how to run it anyway:
+
+**macOS:**
+1. Try to open the app — you'll get a message saying it "cannot be opened because the developer cannot be verified" (or it's damaged/can't be opened, depending on macOS version).
+2. Open **System Settings → Privacy & Security**, scroll down, and click **"Open Anyway"** next to the Recapp warning. Confirm in the dialog that appears.
+3. Alternatively, right-click (or Control-click) the app in Finder and choose **Open**, then confirm in the dialog — this bypasses Gatekeeper for that app without touching system settings.
+4. If macOS says the app is "damaged and can't be opened" (Gatekeeper quarantine on a downloaded, unsigned app), clear the quarantine flag from Terminal:
+   ```bash
+   xattr -cr /Applications/Recapp.app
+   ```
+
+**Windows:**
+1. Running the installer triggers **"Windows protected your PC"** (SmartScreen).
+2. Click **"More info"**, then **"Run anyway"**.
+3. If SmartScreen doesn't show that option, right-click the installer file → **Properties** → check **"Unblock"** at the bottom of the General tab → **OK**, then run it again.
+
 ## Development setup
 
 The following is only needed if you want to run Recapp from source or build it yourself.
