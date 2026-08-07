@@ -1,4 +1,4 @@
-# Recapp Desktop
+# Recapp
 
 Recapp is a small desktop app that catches you up on a TV show before you watch the next episode. Give it a series title, a season/episode, a timerange and it fetches the relevant episode synopses, summarizes them with an LLM (local via Ollama, or a remote provider of your choice) and translates the result into the language you prefer.
 
