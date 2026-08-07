@@ -1,4 +1,5 @@
 import { getVersion } from "@tauri-apps/api/app";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { useEffect, useState } from "react";
 
 export const About = () => {
@@ -74,6 +75,17 @@ export const About = () => {
           </li>
         </ul>
       </section>
+
+      <p className="text-xs text-muted-foreground text-center">
+        Built by{" "}
+        <button
+          type="button"
+          className="underline underline-offset-2 hover:text-foreground"
+          onClick={() => openUrl("https://paperboardlabs.com")}
+        >
+          Paper Board Labs
+        </button>
+      </p>
     </div>
   );
 };
