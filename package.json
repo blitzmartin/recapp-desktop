@@ -2,7 +2,7 @@
   "name": "recapp-desktop",
   "private": true,
   "version": "0.1.0",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "author": {
     "name": "Paper Board Labs",
     "url": "https://paperboardlabs.com"
