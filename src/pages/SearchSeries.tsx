@@ -2,6 +2,7 @@ import { Spinner } from "@/components/shared";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -85,11 +86,14 @@ export const SearchSeries = () => {
                 <FormLabel>Title:</FormLabel>
                 <FormControl>
                   <Input
-                    className="w-[180px]"
+                    className="w-full max-w-lg"
                     placeholder="Series Title"
                     {...field}
                   />
                 </FormControl>
+                <FormDescription>
+                  Enter the title in English, as used by TMDB, even if you selected a different recap language.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -102,7 +106,7 @@ export const SearchSeries = () => {
                 <FormLabel>Season:</FormLabel>
                 <FormControl>
                   <Input
-                    className="w-[180px]"
+                    className="w-45"
                     type="number"
                     {...field}
                     min={1}
@@ -120,7 +124,7 @@ export const SearchSeries = () => {
                 <FormLabel>Episode:</FormLabel>
                 <FormControl>
                   <Input
-                    className="w-[180px]"
+                    className="w-45"
                     type="number"
                     {...field}
                     min={1}
@@ -141,7 +145,7 @@ export const SearchSeries = () => {
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-45">
                       <SelectValue placeholder="Select timerange" />
                     </SelectTrigger>
                   </FormControl>
