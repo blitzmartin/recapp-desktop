@@ -40,13 +40,12 @@ struct MessagesResponse {
 impl LlmProvider for AnthropicProvider {
     async fn summarize(
         &self,
+        series_title: &str,
         text: &str,
         language: &str,
         num_words: u32,
     ) -> Result<String, String> {
-        let system = format!(
-            "Summarize the following TV series episodes in {language} in about {num_words} words. Preserve key plot points while keeping it concise."
-        );
+        let system = super::build_instructions(series_title, language, num_words);
 
         let response = reqwest::Client::new()
             .post("https://api.anthropic.com/v1/messages")

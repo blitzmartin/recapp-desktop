@@ -14,7 +14,40 @@ use ollama::OllamaProvider;
 use openai::OpenAiProvider;
 
 pub trait LlmProvider {
-    async fn summarize(&self, text: &str, language: &str, num_words: u32) -> Result<String, String>;
+    async fn summarize(
+        &self,
+        series_title: &str,
+        text: &str,
+        language: &str,
+        num_words: u32,
+    ) -> Result<String, String>;
+}
+
+/// Shared task instructions, without the source synopses (Anthropic sends
+/// this as a separate `system` field; other providers prepend it to the
+/// user message via `build_prompt`). Centralized so every provider sends
+/// the same wording instead of each duplicating it.
+///
+/// Explicitly asks for one synthesized narrative rather than a per-episode
+/// rundown: without this, models tend to default to "in episode 1... in
+/// episode 2..." rather than extracting the throughlines that actually
+/// matter for someone about to watch the next one.
+pub(crate) fn build_instructions(series_title: &str, language: &str, num_words: u32) -> String {
+    format!(
+        "You are preparing a viewer to watch the next episode of the TV series \"{series_title}\". \
+        Based on the episode synopses provided, write a single cohesive recap in {language} of about {num_words} words. \
+        Synthesize the most important plot developments and ongoing character/story threads into one flowing narrative aimed at refreshing the viewer's memory. \
+        Do not summarize episode by episode or list events one by one, and do not invent details beyond what's in the synopses."
+    )
+}
+
+/// Full prompt (instructions + source text) for providers whose API takes a
+/// single message rather than a separate system field.
+pub(crate) fn build_prompt(series_title: &str, text: &str, language: &str, num_words: u32) -> String {
+    format!(
+        "{}\n\nEpisode synopses:\n\"{text}\"",
+        build_instructions(series_title, language, num_words)
+    )
 }
 
 /// LLM provider selectable by the user. `Ollama` runs locally and needs no
@@ -59,16 +92,17 @@ pub enum AnyLlmProvider {
 impl AnyLlmProvider {
     pub async fn summarize(
         &self,
+        series_title: &str,
         text: &str,
         language: &str,
         num_words: u32,
     ) -> Result<String, String> {
         match self {
-            Self::Ollama(p) => p.summarize(text, language, num_words).await,
-            Self::OpenAi(p) => p.summarize(text, language, num_words).await,
-            Self::Anthropic(p) => p.summarize(text, language, num_words).await,
-            Self::Gemini(p) => p.summarize(text, language, num_words).await,
-            Self::DeepSeek(p) => p.summarize(text, language, num_words).await,
+            Self::Ollama(p) => p.summarize(series_title, text, language, num_words).await,
+            Self::OpenAi(p) => p.summarize(series_title, text, language, num_words).await,
+            Self::Anthropic(p) => p.summarize(series_title, text, language, num_words).await,
+            Self::Gemini(p) => p.summarize(series_title, text, language, num_words).await,
+            Self::DeepSeek(p) => p.summarize(series_title, text, language, num_words).await,
         }
     }
 }

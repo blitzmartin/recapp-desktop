@@ -43,13 +43,12 @@ struct ChatResponse {
 impl LlmProvider for OpenAiProvider {
     async fn summarize(
         &self,
+        series_title: &str,
         text: &str,
         language: &str,
         num_words: u32,
     ) -> Result<String, String> {
-        let prompt = format!(
-            "Summarize the following TV series episodes in {language} in about {num_words} words. Preserve key plot points while keeping it concise:\n\n\"{text}\""
-        );
+        let prompt = super::build_prompt(series_title, text, language, num_words);
 
         let response = reqwest::Client::new()
             .post("https://api.openai.com/v1/chat/completions")
