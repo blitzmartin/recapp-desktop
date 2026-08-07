@@ -1,4 +1,5 @@
 pub mod anthropic;
+pub mod deepseek;
 pub mod gemini;
 pub mod ollama;
 pub mod openai;
@@ -7,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::settings::AppSettings;
 use anthropic::AnthropicProvider;
+use deepseek::DeepSeekProvider;
 use gemini::GeminiProvider;
 use ollama::OllamaProvider;
 use openai::OpenAiProvider;
@@ -25,6 +27,7 @@ pub enum LlmProviderKind {
     OpenAi,
     Anthropic,
     Gemini,
+    DeepSeek,
 }
 
 impl LlmProviderKind {
@@ -35,6 +38,7 @@ impl LlmProviderKind {
             Self::OpenAi => "openai",
             Self::Anthropic => "anthropic",
             Self::Gemini => "gemini",
+            Self::DeepSeek => "deepseek",
         }
     }
 }
@@ -49,6 +53,7 @@ pub enum AnyLlmProvider {
     OpenAi(OpenAiProvider),
     Anthropic(AnthropicProvider),
     Gemini(GeminiProvider),
+    DeepSeek(DeepSeekProvider),
 }
 
 impl AnyLlmProvider {
@@ -63,6 +68,7 @@ impl AnyLlmProvider {
             Self::OpenAi(p) => p.summarize(text, language, num_words).await,
             Self::Anthropic(p) => p.summarize(text, language, num_words).await,
             Self::Gemini(p) => p.summarize(text, language, num_words).await,
+            Self::DeepSeek(p) => p.summarize(text, language, num_words).await,
         }
     }
 }
@@ -96,6 +102,13 @@ pub fn build_provider(settings: &AppSettings) -> Result<AnyLlmProvider, String> 
                 settings.gemini_model.clone(),
             )))
         }
+        LlmProviderKind::DeepSeek => {
+            let key = require_api_key(LlmProviderKind::DeepSeek)?;
+            Ok(AnyLlmProvider::DeepSeek(DeepSeekProvider::new(
+                key,
+                settings.deepseek_model.clone(),
+            )))
+        }
     }
 }
 
@@ -109,9 +122,9 @@ fn require_api_key(provider: LlmProviderKind) -> Result<String, String> {
 }
 
 /// Shared interpretation of error HTTP statuses for remote providers
-/// (OpenAI, Anthropic, Gemini): same meaning (auth/quota/timeout) behind
-/// different conventions, so one mapping point instead of repeating it in
-/// each provider.
+/// (OpenAI, Anthropic, Gemini, DeepSeek): same meaning (auth/quota/model
+/// access/timeout) behind different conventions, so one mapping point
+/// instead of repeating it in each provider.
 pub(crate) async fn ensure_success(
     response: reqwest::Response,
     provider_name: &str,
@@ -120,11 +133,59 @@ pub(crate) async fn ensure_success(
     if status.is_success() {
         return Ok(response);
     }
+    // Providers put the actual reason ("model not found", "insufficient
+    // quota", ...) in the response body; a status code alone is too coarse
+    // to tell "bad model name" apart from other 400s. Best-effort read, so a
+    // body-read failure still falls back to a status-based message.
+    let body = response.text().await.unwrap_or_default();
+    let detail = extract_error_message(&body);
+
     let message = match status.as_u16() {
-        401 | 403 => format!("{provider_name}: invalid or unauthorized API key."),
-        429 => format!("{provider_name}: rate limit or quota exceeded."),
+        401 | 403 => format!(
+            "{provider_name}: invalid or unauthorized API key.{}",
+            detail_suffix(&detail)
+        ),
+        404 => format!(
+            "{provider_name}: model not found, or your API key doesn't have access to it. \
+             Check the model name in Settings.{}",
+            detail_suffix(&detail)
+        ),
+        400 if detail
+            .as_deref()
+            .is_some_and(|d| d.to_lowercase().contains("model")) => format!(
+            "{provider_name}: the request was rejected because of the model. \
+             Check the model name in Settings.{}",
+            detail_suffix(&detail)
+        ),
+        429 => format!(
+            "{provider_name}: rate limit or quota exceeded.{}",
+            detail_suffix(&detail)
+        ),
         408 | 504 => format!("{provider_name}: request timed out."),
-        _ => format!("{provider_name}: request failed ({status})."),
+        _ => format!(
+            "{provider_name}: request failed ({status}).{}",
+            detail_suffix(&detail)
+        ),
     };
     Err(message)
+}
+
+/// Best-effort extraction of a human-readable message from a provider's
+/// JSON error body. OpenAI/DeepSeek nest it under `error.message`;
+/// Anthropic and Gemini use the same shape or a top-level `message`.
+fn extract_error_message(body: &str) -> Option<String> {
+    let value: serde_json::Value = serde_json::from_str(body).ok()?;
+    value
+        .get("error")
+        .and_then(|e| e.get("message"))
+        .or_else(|| value.get("message"))
+        .and_then(|m| m.as_str())
+        .map(str::to_string)
+}
+
+fn detail_suffix(detail: &Option<String>) -> String {
+    match detail {
+        Some(d) => format!(" Details: {d}"),
+        None => String::new(),
+    }
 }

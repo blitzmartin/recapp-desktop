@@ -30,6 +30,7 @@ const providerLabels: Record<LlmProviderKind, string> = {
   [LlmProviderKind.OPENAI]: "OpenAI",
   [LlmProviderKind.ANTHROPIC]: "Anthropic",
   [LlmProviderKind.GEMINI]: "Gemini",
+  [LlmProviderKind.DEEPSEEK]: "DeepSeek",
 };
 
 // Every remote provider stores its model in its own `AppSettings` field, so
@@ -39,10 +40,29 @@ const providerModelField: Record<LlmProviderKind, keyof AppSettings | null> = {
   [LlmProviderKind.OPENAI]: "openai_model",
   [LlmProviderKind.ANTHROPIC]: "anthropic_model",
   [LlmProviderKind.GEMINI]: "gemini_model",
+  [LlmProviderKind.DEEPSEEK]: "deepseek_model",
 };
 
 const requiresApiKey = (provider: LlmProviderKind) =>
   provider !== LlmProviderKind.OLLAMA;
+
+// Curated list of common models per remote provider. There's no reliable
+// API to list "models this key can actually use" up front (see Settings.tsx
+// history), so this is a maintained shortlist rather than a live query.
+// Ollama is handled separately: it's queried live from the local install.
+const CUSTOM_MODEL = "__custom__";
+
+const staticModelOptions: Partial<Record<LlmProviderKind, string[]>> = {
+  [LlmProviderKind.OPENAI]: ["gpt-4o", "gpt-4o-mini", "gpt-4.1", "gpt-4.1-mini", "o3-mini"],
+  [LlmProviderKind.ANTHROPIC]: [
+    "claude-opus-5",
+    "claude-sonnet-5",
+    "claude-haiku-4-5-20251001",
+    "claude-3-5-haiku-latest",
+  ],
+  [LlmProviderKind.GEMINI]: ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash"],
+  [LlmProviderKind.DEEPSEEK]: ["deepseek-chat", "deepseek-reasoner"],
+};
 
 export const Settings = () => {
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -51,10 +71,26 @@ export const Settings = () => {
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [hasApiKey, setHasApiKey] = useState(false);
   const [apiKeyStatus, setApiKeyStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [ollamaModelsError, setOllamaModelsError] = useState("");
+  const [customModel, setCustomModel] = useState(false);
 
   useEffect(() => {
     invoke<AppSettings>("get_settings").then(setSettings);
   }, []);
+
+  useEffect(() => {
+    if (!settings || settings.llm_provider !== LlmProviderKind.OLLAMA) return;
+    setOllamaModelsError("");
+    invoke<string[]>("list_ollama_models", { url: settings.ollama_url })
+      .then(setOllamaModels)
+      .catch((err) => {
+        setOllamaModels([]);
+        setOllamaModelsError(
+          typeof err === "string" ? err : "Could not reach Ollama to list installed models.",
+        );
+      });
+  }, [settings?.llm_provider, settings?.ollama_url]);
 
   useEffect(() => {
     if (!settings || !requiresApiKey(settings.llm_provider)) {
@@ -65,6 +101,10 @@ export const Settings = () => {
       setHasApiKey,
     );
     setApiKeyInput("");
+  }, [settings?.llm_provider]);
+
+  useEffect(() => {
+    setCustomModel(false);
   }, [settings?.llm_provider]);
 
   if (!settings) return null;
@@ -88,6 +128,13 @@ export const Settings = () => {
   };
 
   const modelField = providerModelField[settings.llm_provider];
+  const modelOptions =
+    settings.llm_provider === LlmProviderKind.OLLAMA
+      ? ollamaModels
+      : staticModelOptions[settings.llm_provider] ?? [];
+  const currentModel = modelField ? (settings[modelField] as string) : "";
+  const isKnownModel = modelOptions.includes(currentModel);
+  const showCustomInput = customModel || (currentModel !== "" && !isKnownModel);
 
   return (
     <div className="flex flex-col gap-6 w-[280px]">
@@ -148,13 +195,64 @@ export const Settings = () => {
       {modelField && (
         <div className="grid gap-2">
           <Label htmlFor="llm_model">Model:</Label>
-          <Input
-            id="llm_model"
-            value={settings[modelField] as string}
-            onChange={(e) =>
-              setSettings({ ...settings, [modelField]: e.target.value })
-            }
-          />
+          {showCustomInput ? (
+            <>
+              <Input
+                id="llm_model"
+                placeholder="Model name"
+                value={currentModel}
+                onChange={(e) =>
+                  setSettings({ ...settings, [modelField]: e.target.value })
+                }
+              />
+              {modelOptions.length > 0 && (
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground hover:text-foreground text-left"
+                  onClick={() => {
+                    setCustomModel(false);
+                    setSettings({ ...settings, [modelField]: modelOptions[0] });
+                  }}
+                >
+                  Choose from list instead
+                </button>
+              )}
+            </>
+          ) : (
+            <Select
+              value={currentModel}
+              onValueChange={(value) => {
+                if (value === CUSTOM_MODEL) {
+                  setCustomModel(true);
+                  setSettings({ ...settings, [modelField]: "" });
+                  return;
+                }
+                setSettings({ ...settings, [modelField]: value });
+              }}
+            >
+              <SelectTrigger className="w-full" id="llm_model">
+                <SelectValue placeholder="Select a model" />
+              </SelectTrigger>
+              <SelectContent>
+                {modelOptions.map((model) => (
+                  <SelectItem key={model} value={model}>
+                    {model}
+                  </SelectItem>
+                ))}
+                <SelectItem value={CUSTOM_MODEL}>Custom…</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          {settings.llm_provider === LlmProviderKind.OLLAMA && ollamaModelsError && (
+            <p className="text-xs text-destructive">{ollamaModelsError}</p>
+          )}
+          {settings.llm_provider === LlmProviderKind.OLLAMA &&
+            !ollamaModelsError &&
+            ollamaModels.length === 0 && (
+              <p className="text-xs text-muted-foreground">
+                No models found. Pull one with `ollama pull &lt;model&gt;`.
+              </p>
+            )}
         </div>
       )}
       {requiresApiKey(settings.llm_provider) && (

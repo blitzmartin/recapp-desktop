@@ -16,7 +16,8 @@ pub fn run() {
             settings::save_settings,
             secrets::set_llm_api_key,
             secrets::has_llm_api_key,
-            secrets::delete_llm_api_key
+            secrets::delete_llm_api_key,
+            llm::ollama::list_ollama_models
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

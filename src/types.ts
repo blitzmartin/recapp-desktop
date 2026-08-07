@@ -41,6 +41,7 @@ export enum LlmProviderKind {
   OPENAI = "openai",
   ANTHROPIC = "anthropic",
   GEMINI = "gemini",
+  DEEPSEEK = "deepseek",
 }
 
 export type AppSettings = {
@@ -51,5 +52,6 @@ export type AppSettings = {
   openai_model: string;
   anthropic_model: string;
   gemini_model: string;
+  deepseek_model: string;
   default_language: Language;
 };

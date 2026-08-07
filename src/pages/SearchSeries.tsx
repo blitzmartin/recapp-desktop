@@ -36,6 +36,7 @@ type SearchSeriesFormValues = z.infer<typeof searchSeriesValidationSchema>;
 
 export const SearchSeries = () => {
   const [summary, setSummary] = useState("");
+  const [error, setError] = useState("");
 
   const searchSeriesForm = useForm<SearchSeriesFormValues>({
     defaultValues: {
@@ -49,6 +50,7 @@ export const SearchSeries = () => {
 
   const onSubmit = async (values: SearchSeriesFormValues) => {
     setSummary("");
+    setError("");
 
     const searchData: SearchData = {
       series_title: values.series_title,
@@ -62,9 +64,9 @@ export const SearchSeries = () => {
         searchData,
       });
       if (response.summary) setSummary(response.summary);
-    } catch (error) {
-      console.error("Error:", error);
-      setSummary("Dati non disponibili");
+    } catch (err) {
+      console.error("Error:", err);
+      setError(typeof err === "string" ? err : "Something went wrong. Please try again.");
     }
   };
 
@@ -174,6 +176,11 @@ export const SearchSeries = () => {
           </div>
         </form>
       </Form>
+      {error && (
+        <div className="max-w-2xl p-5 text-destructive" role="alert">
+          {error}
+        </div>
+      )}
       <div className="max-w-2xl p-5">{summary}</div>
     </div>
   );
