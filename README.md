@@ -92,6 +92,6 @@ This produces a native installer for the OS you run it on (`.app`/`.dmg` on macO
 
 ## License
 
-Recapp Desktop is licensed under [AGPL-3.0](LICENSE).
+Recapp Desktop is licensed under [PolyForm Noncommercial 1.0.0](LICENSE).
 
-You're free to use, modify, and redistribute this project. The one condition that differs from a permissive license like MIT: if you run a modified version of this software as a network service (e.g. hosting it as a SaaS or on a server others can access), you must make the modified source code available to those users. Running it locally, or contributing changes back upstream, carries no such obligation.
+Source-available, not open source: you're free to use, modify, and redistribute this project for any noncommercial purpose (personal use, research, education, nonprofits). Any commercial use is not permitted under this license.
