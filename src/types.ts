@@ -36,9 +36,22 @@ export type Episode = {
   episode_number: number;
 };
 
+export enum LlmProviderKind {
+  OLLAMA = "ollama",
+  OPENAI = "openai",
+  ANTHROPIC = "anthropic",
+  GEMINI = "gemini",
+  DEEPSEEK = "deepseek",
+}
+
 export type AppSettings = {
   tmdb_api_key: string;
+  llm_provider: LlmProviderKind;
   ollama_url: string;
   ollama_model: string;
+  openai_model: string;
+  anthropic_model: string;
+  gemini_model: string;
+  deepseek_model: string;
   default_language: Language;
 };

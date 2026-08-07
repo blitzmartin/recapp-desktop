@@ -1,6 +1,6 @@
 # Recapp Desktop
 
-Recapp is a small desktop app that catches you up on a TV show before you watch the next episode. Give it a series title, a season/episode, a timerange and it fetches the relevant episode synopses, summarizes them with a local LLM and translates the result into the language you prefer.
+Recapp is a small desktop app that catches you up on a TV show before you watch the next episode. Give it a series title, a season/episode, a timerange and it fetches the relevant episode synopses, summarizes them with an LLM (local via Ollama, or a remote provider of your choice) and translates the result into the language you prefer.
 
 It's a native desktop port built with Tauri. The frontend is React/TypeScript; the backend is Rust. There's no server, no REST API, no Node runtime involved.
 
@@ -22,10 +22,12 @@ For the two "until now" ranges, the collected synopses are summarized by an LLM 
 Recapp doesn't ship with any API keys. You configure everything yourself from the Settings screen (gear icon, top left):
 
 - **TMDB API key** (required). Recapp uses [The Movie Database](https://www.themoviedb.org/) for episode data. Get a free key at https://www.themoviedb.org/settings/api after creating an account.
-- **Ollama URL and model** (required for summarization/translation). Recapp currently uses [Ollama](https://ollama.com) running locally as its LLM provider; install it, pull a model (e.g. `ollama pull gemma4`) and make sure it's running (`http://localhost:11434` by default) before generating a recap.
-- **Default language**. The language recaps are translated into. Default lang is English which needs no translation step; any other language routes through Ollama.
+- **LLM provider** (required for summarization). Choose one from the Settings screen:
+  - **Ollama** (local, default). Install [Ollama](https://ollama.com), pull a model (e.g. `ollama pull gemma3`), and make sure it's running (`http://localhost:11434` by default) before generating a recap. No API key needed.
+  - **OpenAI**, **Anthropic**, **Gemini**, or **DeepSeek** (remote). Pick the provider, enter the model name (a sensible default is prefilled) and your API key. Get a key from [OpenAI](https://platform.openai.com/api-keys), [Anthropic](https://console.anthropic.com/settings/keys), [Google AI Studio](https://aistudio.google.com/apikey), or [DeepSeek](https://platform.deepseek.com/api_keys) respectively. Usage is billed by that provider according to their pricing.
+- **Default language**. The language recaps are translated into. Default lang is English which needs no translation step; any other language currently routes through Ollama for translation regardless of which provider you picked for summarization.
 
-Settings are stored locally on your machine (a JSON file in your OS's app config directory), nothing is sent anywhere except the request to TMDB and to your own local Ollama instance.
+Settings (provider choice, models, TMDB key, default language) are stored locally on your machine in a JSON file in your OS's app config directory. Remote LLM API keys are **not** stored in that file — they're saved in your OS's secure credential store (Keychain on macOS, Credential Manager on Windows) via the system keyring, and only read from there when a request needs them. Nothing is sent anywhere except requests to TMDB, to your chosen LLM provider, and to your local Ollama instance for translation.
 
 ## Installing a prebuilt release
 
@@ -35,7 +37,7 @@ If you just want to use the app, download the installer for your OS from the [Re
 - **Windows**: download the `.msi` or `.exe` and run it.
 - **Linux**: download the `.deb`, `.rpm`, or AppImage for your distro.
 
-You'll still need [Ollama](https://ollama.com) running locally with a model pulled, and a free [TMDB API key](https://www.themoviedb.org/settings/api) — see [What you need to provide](#what-you-need-to-provide) above.
+You'll still need a free [TMDB API key](https://www.themoviedb.org/settings/api), and an LLM provider — either [Ollama](https://ollama.com) running locally with a model pulled, or an API key for OpenAI/Anthropic/Gemini/DeepSeek — see [What you need to provide](#what-you-need-to-provide) above.
 
 ### "Unidentified developer" / "Windows protected your PC" warnings
 
@@ -64,7 +66,7 @@ The following is only needed if you want to run Recapp from source or build it y
 - [Node.js](https://nodejs.org/) 18+
 - [Rust](https://www.rust-lang.org/tools/install) (stable toolchain, via `rustup`)
 - Platform build tools for Tauri: see the [Tauri prerequisites guide](https://tauri.app/start/prerequisites/) for your OS (Xcode Command Line Tools on macOS, Build Tools for Visual Studio on Windows, standard dev packages on Linux)
-- [Ollama](https://ollama.com) running locally, with at least one model pulled
+- An LLM provider: either [Ollama](https://ollama.com) running locally with at least one model pulled, or an API key for OpenAI/Anthropic/Gemini/DeepSeek
 
 ### Running locally
 
@@ -73,7 +75,7 @@ npm install
 npm run tauri dev
 ```
 
-This starts the Vite dev server and compiles/launches the Rust backend with hot reload. On first run, open Settings and fill in your TMDB API key and Ollama configuration before using the recap form.
+This starts the Vite dev server and compiles/launches the Rust backend with hot reload. On first run, open Settings and fill in your TMDB API key and LLM provider configuration before using the recap form.
 
 ### Building a release executable
 
@@ -86,7 +88,7 @@ This produces a native installer for the OS you run it on (`.app`/`.dmg` on macO
 ## Project structure
 
 - `src/` — React/TypeScript frontend (form UI, Settings screen)
-- `src-tauri/src/` — Rust backend: `tmdb.rs` (TMDB API client), `llm/` (summarization provider, currently Ollama), `translator/` (translation provider, currently Ollama), `settings.rs` (local config persistence), `commands.rs` (Tauri commands invoked from the frontend)
+- `src-tauri/src/` — Rust backend: `tmdb.rs` (TMDB API client), `llm/` (summarization providers: Ollama, OpenAI, Anthropic, Gemini, DeepSeek), `translator/` (translation provider, currently Ollama), `settings.rs` (local config persistence), `secrets.rs` (API key storage in the system keyring), `commands.rs` (Tauri commands invoked from the frontend)
 
 ## License
 
