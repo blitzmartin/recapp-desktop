@@ -12,10 +12,9 @@ Given a series, a season/episode number, and a timerange, Recapp builds a recap 
 | --- | --- |
 | All series until now | Every episode from earlier seasons, plus the current season up to (excluding) the selected episode |
 | Season until now | Only the current season, up to (excluding) the selected episode |
-| Prev episode | Just the previous episode's synopsis |
 | This episode | Just the selected episode's synopsis |
 
-For the two "until now" ranges, the collected synopses are summarized by an LLM before translation. For the single-episode ranges, the raw synopsis is translated directly.
+For the two "until now" ranges, the collected synopses are summarized by an LLM before translation. For the single-episode range, the raw synopsis is translated directly.
 
 ## What you need to provide
 

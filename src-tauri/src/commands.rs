@@ -50,17 +50,12 @@ pub async fn generate_recap(
         })?;
 
     match search_data.timerange {
-        Timerange::ThisEpisode | Timerange::PrevEpisode => {
-            let episode_number = match search_data.timerange {
-                Timerange::PrevEpisode => search_data.episode_number - 1,
-                _ => search_data.episode_number,
-            };
-
+        Timerange::ThisEpisode => {
             let episode_data = tmdb::get_episode(
                 &api_key,
                 series_id,
                 search_data.season_number,
-                episode_number,
+                search_data.episode_number,
             )
             .await
             .map_err(|e| {

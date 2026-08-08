@@ -8,7 +8,6 @@ export type SearchData = {
 export enum Timerange {
     ALL_SERIES = "all_series",
     ALL_SEASON = "all_season",
-    PREV_EPISODE = "prev_episode",
     THIS_EPISODE = "this_episode"
 }
 

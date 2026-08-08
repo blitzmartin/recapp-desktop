@@ -156,9 +156,6 @@ export const SearchSeries = () => {
                     <SelectItem value={Timerange.ALL_SEASON}>
                       Season until now
                     </SelectItem>
-                    <SelectItem value={Timerange.PREV_EPISODE}>
-                      Prev Episode
-                    </SelectItem>
                     <SelectItem value={Timerange.THIS_EPISODE}>
                       This Episode
                     </SelectItem>

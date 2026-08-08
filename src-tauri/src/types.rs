@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 pub enum Timerange {
     AllSeries,
     AllSeason,
-    PrevEpisode,
     ThisEpisode,
 }
 
