@@ -50,7 +50,6 @@ export const About = () => {
             compress.
           </li>
           <li>
-            <span className="font-medium text-foreground">Prev Episode</span> /{" "}
             <span className="font-medium text-foreground">This Episode</span> —
             uses the single episode's TMDB synopsis directly, no LLM involved.
             Fastest option and the most detail, but limited to that one episode.
