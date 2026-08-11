@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::LlmProvider;
+use super::{LlmProvider, SummarizeOptions};
 
 pub struct AnthropicProvider {
     api_key: String,
@@ -25,6 +25,8 @@ struct MessagesRequest {
     system: String,
     messages: Vec<Message>,
     max_tokens: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    temperature: Option<f32>,
 }
 
 #[derive(Deserialize)]
@@ -43,9 +45,14 @@ impl LlmProvider for AnthropicProvider {
         series_title: &str,
         text: &str,
         language: &str,
-        num_words: u32,
+        options: &SummarizeOptions<'_>,
     ) -> Result<String, String> {
-        let system = super::build_instructions(series_title, language, num_words);
+        let system = super::build_instructions(
+            series_title,
+            language,
+            options.num_words,
+            options.custom_prompt_template,
+        );
 
         let response = reqwest::Client::new()
             .post("https://api.anthropic.com/v1/messages")
@@ -59,6 +66,7 @@ impl LlmProvider for AnthropicProvider {
                     content: text.to_string(),
                 }],
                 max_tokens: 1024,
+                temperature: Some(options.temperature),
             })
             .send()
             .await
@@ -105,6 +113,7 @@ impl LlmProvider for AnthropicProvider {
                     content: prompt,
                 }],
                 max_tokens: 1024,
+                temperature: None,
             })
             .send()
             .await

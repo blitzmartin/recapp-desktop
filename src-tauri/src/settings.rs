@@ -29,6 +29,64 @@ fn default_deepseek_model() -> String {
     "deepseek-chat".to_string()
 }
 
+/// How closely the LLM should stick to the source synopses versus elaborate
+/// freely, mapped to the provider's `temperature` param. Exposed in the
+/// Advanced AI settings screen as presets plus a free-form `Custom` value,
+/// so most users never need to know what "temperature" means.
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+pub enum PrecisionSetting {
+    Precise,
+    Balanced,
+    Creative,
+    Custom { value: f32 },
+}
+
+impl PrecisionSetting {
+    pub fn temperature(self) -> f32 {
+        match self {
+            Self::Precise => 0.1,
+            Self::Balanced => 0.5,
+            Self::Creative => 0.9,
+            Self::Custom { value } => value.clamp(0.0, 1.0),
+        }
+    }
+}
+
+impl Default for PrecisionSetting {
+    fn default() -> Self {
+        Self::Balanced
+    }
+}
+
+/// Target length of the generated recap, in words. Same preset + `Custom`
+/// shape as `PrecisionSetting`.
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+pub enum LengthSetting {
+    Short,
+    Medium,
+    Long,
+    Custom { value: u32 },
+}
+
+impl LengthSetting {
+    pub fn num_words(self) -> u32 {
+        match self {
+            Self::Short => 50,
+            Self::Medium => 100,
+            Self::Long => 200,
+            Self::Custom { value } => value.clamp(20, 500),
+        }
+    }
+}
+
+impl Default for LengthSetting {
+    fn default() -> Self {
+        Self::Medium
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
     #[serde(default)]
@@ -49,6 +107,15 @@ pub struct AppSettings {
     pub deepseek_model: String,
     #[serde(default)]
     pub default_language: Language,
+    /// `None` means "use the built-in default prompt" (see
+    /// `llm::DEFAULT_PROMPT_TEMPLATE`), so future changes to the default
+    /// wording still apply to users who never customized it.
+    #[serde(default)]
+    pub custom_prompt_template: Option<String>,
+    #[serde(default)]
+    pub precision: PrecisionSetting,
+    #[serde(default)]
+    pub length: LengthSetting,
 }
 
 impl Default for AppSettings {
@@ -63,6 +130,9 @@ impl Default for AppSettings {
             gemini_model: default_gemini_model(),
             deepseek_model: default_deepseek_model(),
             default_language: Language::En,
+            custom_prompt_template: None,
+            precision: PrecisionSetting::default(),
+            length: LengthSetting::default(),
         }
     }
 }
@@ -98,5 +168,8 @@ pub fn get_settings(app: AppHandle) -> AppSettings {
 
 #[tauri::command]
 pub fn save_settings(app: AppHandle, settings: AppSettings) -> Result<(), String> {
+    if let Some(template) = &settings.custom_prompt_template {
+        crate::llm::validate_prompt_template(template)?;
+    }
     save(&app, &settings)
 }

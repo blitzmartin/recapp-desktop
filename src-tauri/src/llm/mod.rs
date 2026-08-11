@@ -13,13 +13,22 @@ use gemini::GeminiProvider;
 use ollama::OllamaProvider;
 use openai::OpenAiProvider;
 
+/// Options controlling how `summarize` generates the recap: target length,
+/// creativity (`temperature`), and an optional user-provided prompt
+/// template overriding `DEFAULT_PROMPT_TEMPLATE`.
+pub struct SummarizeOptions<'a> {
+    pub num_words: u32,
+    pub temperature: f32,
+    pub custom_prompt_template: Option<&'a str>,
+}
+
 pub trait LlmProvider {
     async fn summarize(
         &self,
         series_title: &str,
         text: &str,
         language: &str,
-        num_words: u32,
+        options: &SummarizeOptions,
     ) -> Result<String, String>;
 
     async fn translate(
@@ -30,30 +39,63 @@ pub trait LlmProvider {
     ) -> Result<String, String>;
 }
 
-/// Shared task instructions, without the source synopses (Anthropic sends
-/// this as a separate `system` field; other providers prepend it to the
-/// user message via `build_prompt`). Centralized so every provider sends
-/// the same wording instead of each duplicating it.
+/// Default task instructions template, without the source synopses
+/// (Anthropic sends this as a separate `system` field; other providers
+/// prepend it to the user message via `build_prompt`). Centralized so every
+/// provider sends the same wording instead of each duplicating it, and
+/// exposed as the baseline the "Reset to default" action in Advanced AI
+/// settings restores.
 ///
 /// Explicitly asks for one synthesized narrative rather than a per-episode
 /// rundown: without this, models tend to default to "in episode 1... in
 /// episode 2..." rather than extracting the throughlines that actually
 /// matter for someone about to watch the next one.
-pub(crate) fn build_instructions(series_title: &str, language: &str, num_words: u32) -> String {
-    format!(
-        "You are preparing a viewer to watch the next episode of the TV series \"{series_title}\". \
-        Based on the episode synopses provided, write a single cohesive recap in {language} of about {num_words} words. \
-        Synthesize the most important plot developments and ongoing character/story threads into one flowing narrative aimed at refreshing the viewer's memory. \
-        Do not summarize episode by episode or list events one by one, and do not invent details beyond what's in the synopses."
-    )
+pub const DEFAULT_PROMPT_TEMPLATE: &str = "You are preparing a viewer to watch the next episode of the TV series \"{series_title}\". \
+Based on the episode synopses provided, write a single cohesive recap in {language} of about {num_words} words. \
+Synthesize the most important plot developments and ongoing character/story threads into one flowing narrative aimed at refreshing the viewer's memory. \
+Do not summarize episode by episode or list events one by one, and do not invent details beyond what's in the synopses.";
+
+/// A user-editable template must still reference these so the generated
+/// recap stays grounded in the right series and language; `{num_words}` is
+/// optional since the target length is also enforced via `SummarizeOptions`.
+pub fn validate_prompt_template(template: &str) -> Result<(), String> {
+    if !template.contains("{series_title}") || !template.contains("{language}") {
+        return Err(
+            "Il prompt deve contenere i placeholder {series_title} e {language}.".to_string(),
+        );
+    }
+    Ok(())
+}
+
+fn render_template(template: &str, series_title: &str, language: &str, num_words: u32) -> String {
+    template
+        .replace("{series_title}", series_title)
+        .replace("{language}", language)
+        .replace("{num_words}", &num_words.to_string())
+}
+
+pub(crate) fn build_instructions(
+    series_title: &str,
+    language: &str,
+    num_words: u32,
+    custom_template: Option<&str>,
+) -> String {
+    let template = custom_template.unwrap_or(DEFAULT_PROMPT_TEMPLATE);
+    render_template(template, series_title, language, num_words)
 }
 
 /// Full prompt (instructions + source text) for providers whose API takes a
 /// single message rather than a separate system field.
-pub(crate) fn build_prompt(series_title: &str, text: &str, language: &str, num_words: u32) -> String {
+pub(crate) fn build_prompt(
+    series_title: &str,
+    text: &str,
+    language: &str,
+    num_words: u32,
+    custom_template: Option<&str>,
+) -> String {
     format!(
         "{}\n\nEpisode synopses:\n\"{text}\"",
-        build_instructions(series_title, language, num_words)
+        build_instructions(series_title, language, num_words, custom_template)
     )
 }
 
@@ -111,14 +153,14 @@ impl AnyLlmProvider {
         series_title: &str,
         text: &str,
         language: &str,
-        num_words: u32,
+        options: &SummarizeOptions<'_>,
     ) -> Result<String, String> {
         match self {
-            Self::Ollama(p) => p.summarize(series_title, text, language, num_words).await,
-            Self::OpenAi(p) => p.summarize(series_title, text, language, num_words).await,
-            Self::Anthropic(p) => p.summarize(series_title, text, language, num_words).await,
-            Self::Gemini(p) => p.summarize(series_title, text, language, num_words).await,
-            Self::DeepSeek(p) => p.summarize(series_title, text, language, num_words).await,
+            Self::Ollama(p) => p.summarize(series_title, text, language, options).await,
+            Self::OpenAi(p) => p.summarize(series_title, text, language, options).await,
+            Self::Anthropic(p) => p.summarize(series_title, text, language, options).await,
+            Self::Gemini(p) => p.summarize(series_title, text, language, options).await,
+            Self::DeepSeek(p) => p.summarize(series_title, text, language, options).await,
         }
     }
 

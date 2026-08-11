@@ -64,7 +64,11 @@ const staticModelOptions: Partial<Record<LlmProviderKind, string[]>> = {
   [LlmProviderKind.DEEPSEEK]: ["deepseek-chat", "deepseek-reasoner"],
 };
 
-export const Settings = () => {
+type SettingsProps = {
+  onNavigateAdvanced: () => void;
+};
+
+export const Settings = ({ onNavigateAdvanced }: SettingsProps) => {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [showApiKey, setShowApiKey] = useState(false);
@@ -309,6 +313,13 @@ export const Settings = () => {
             ? "Saved"
             : "Save"}
       </Button>
+      <button
+        type="button"
+        className="text-sm text-muted-foreground hover:text-foreground text-left"
+        onClick={onNavigateAdvanced}
+      >
+        Advanced AI settings →
+      </button>
     </div>
   );
 };

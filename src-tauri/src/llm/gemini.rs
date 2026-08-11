@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::LlmProvider;
+use super::{LlmProvider, SummarizeOptions};
 
 pub struct GeminiProvider {
     api_key: String,
@@ -24,8 +24,16 @@ struct Content {
 }
 
 #[derive(Serialize)]
+struct GenerationConfig {
+    temperature: f32,
+}
+
+#[derive(Serialize)]
 struct GenerateRequest {
     contents: Vec<Content>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "generationConfig")]
+    generation_config: Option<GenerationConfig>,
 }
 
 #[derive(Deserialize)]
@@ -54,9 +62,15 @@ impl LlmProvider for GeminiProvider {
         series_title: &str,
         text: &str,
         language: &str,
-        num_words: u32,
+        options: &SummarizeOptions<'_>,
     ) -> Result<String, String> {
-        let prompt = super::build_prompt(series_title, text, language, num_words);
+        let prompt = super::build_prompt(
+            series_title,
+            text,
+            language,
+            options.num_words,
+            options.custom_prompt_template,
+        );
 
         let url = format!(
             "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
@@ -69,6 +83,9 @@ impl LlmProvider for GeminiProvider {
                 contents: vec![Content {
                     parts: vec![Part { text: prompt }],
                 }],
+                generation_config: Some(GenerationConfig {
+                    temperature: options.temperature,
+                }),
             })
             .send()
             .await
@@ -115,6 +132,7 @@ impl LlmProvider for GeminiProvider {
                 contents: vec![Content {
                     parts: vec![Part { text: prompt }],
                 }],
+                generation_config: None,
             })
             .send()
             .await
