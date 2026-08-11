@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::LlmProvider;
+use super::{LlmProvider, SummarizeOptions};
 
 pub struct OpenAiProvider {
     api_key: String,
@@ -23,6 +23,8 @@ struct ChatMessage {
 struct ChatRequest {
     model: String,
     messages: Vec<ChatMessage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    temperature: Option<f32>,
 }
 
 #[derive(Deserialize)]
@@ -46,9 +48,15 @@ impl LlmProvider for OpenAiProvider {
         series_title: &str,
         text: &str,
         language: &str,
-        num_words: u32,
+        options: &SummarizeOptions<'_>,
     ) -> Result<String, String> {
-        let prompt = super::build_prompt(series_title, text, language, num_words);
+        let prompt = super::build_prompt(
+            series_title,
+            text,
+            language,
+            options.num_words,
+            options.custom_prompt_template,
+        );
 
         let response = reqwest::Client::new()
             .post("https://api.openai.com/v1/chat/completions")
@@ -59,6 +67,7 @@ impl LlmProvider for OpenAiProvider {
                     role: "user",
                     content: prompt,
                 }],
+                temperature: Some(options.temperature),
             })
             .send()
             .await
@@ -102,6 +111,7 @@ impl LlmProvider for OpenAiProvider {
                     role: "user",
                     content: prompt,
                 }],
+                temperature: None,
             })
             .send()
             .await

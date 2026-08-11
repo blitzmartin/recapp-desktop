@@ -43,6 +43,18 @@ export enum LlmProviderKind {
   DEEPSEEK = "deepseek",
 }
 
+export type PrecisionSetting =
+  | { kind: "precise" }
+  | { kind: "balanced" }
+  | { kind: "creative" }
+  | { kind: "custom"; value: number };
+
+export type LengthSetting =
+  | { kind: "short" }
+  | { kind: "medium" }
+  | { kind: "long" }
+  | { kind: "custom"; value: number };
+
 export type AppSettings = {
   tmdb_api_key: string;
   llm_provider: LlmProviderKind;
@@ -53,4 +65,7 @@ export type AppSettings = {
   gemini_model: string;
   deepseek_model: string;
   default_language: Language;
+  custom_prompt_template: string | null;
+  precision: PrecisionSetting;
+  length: LengthSetting;
 };

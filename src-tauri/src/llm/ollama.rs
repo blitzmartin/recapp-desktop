@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::LlmProvider;
+use super::{LlmProvider, SummarizeOptions};
 
 pub struct OllamaProvider {
     url: String,
@@ -20,10 +20,17 @@ struct ChatMessage {
 }
 
 #[derive(Serialize)]
+struct ChatOptions {
+    temperature: f32,
+}
+
+#[derive(Serialize)]
 struct ChatRequest {
     model: String,
     messages: Vec<ChatMessage>,
     stream: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    options: Option<ChatOptions>,
 }
 
 #[derive(Deserialize)]
@@ -73,9 +80,15 @@ impl LlmProvider for OllamaProvider {
         series_title: &str,
         text: &str,
         language: &str,
-        num_words: u32,
+        options: &SummarizeOptions<'_>,
     ) -> Result<String, String> {
-        let prompt = super::build_prompt(series_title, text, language, num_words);
+        let prompt = super::build_prompt(
+            series_title,
+            text,
+            language,
+            options.num_words,
+            options.custom_prompt_template,
+        );
 
         let response: ChatResponse = reqwest::Client::new()
             .post(format!("{}/api/chat", self.url))
@@ -86,6 +99,9 @@ impl LlmProvider for OllamaProvider {
                     content: prompt,
                 }],
                 stream: false,
+                options: Some(ChatOptions {
+                    temperature: options.temperature,
+                }),
             })
             .send()
             .await
@@ -121,6 +137,7 @@ impl LlmProvider for OllamaProvider {
                     content: prompt,
                 }],
                 stream: false,
+                options: None,
             })
             .send()
             .await

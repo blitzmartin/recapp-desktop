@@ -131,8 +131,13 @@ pub async fn generate_recap(
                 "No summary available".to_string()
             } else {
                 let provider = llm::build_provider(&settings)?;
+                let options = llm::SummarizeOptions {
+                    num_words: settings.length.num_words(),
+                    temperature: settings.precision.temperature(),
+                    custom_prompt_template: settings.custom_prompt_template.as_deref(),
+                };
                 let recapped_text = provider
-                    .summarize(&search_data.series_title, &text_to_recap, "en", 100)
+                    .summarize(&search_data.series_title, &text_to_recap, "en", &options)
                     .await
                     .map_err(|e| {
                         eprintln!("[generate_recap] errore riassunto LLM: {e}");
