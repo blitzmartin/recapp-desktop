@@ -61,7 +61,7 @@ Do not summarize episode by episode or list events one by one, and do not invent
 pub fn validate_prompt_template(template: &str) -> Result<(), String> {
     if !template.contains("{series_title}") || !template.contains("{language}") {
         return Err(
-            "Il prompt deve contenere i placeholder {series_title} e {language}.".to_string(),
+            "The prompt must contain the {series_title} and {language} placeholders.".to_string(),
         );
     }
     Ok(())

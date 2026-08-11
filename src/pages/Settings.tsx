@@ -259,6 +259,13 @@ export const Settings = ({ onNavigateAdvanced }: SettingsProps) => {
             )}
         </div>
       )}
+      <button
+        type="button"
+        className="text-sm text-muted-foreground hover:text-foreground text-left"
+        onClick={onNavigateAdvanced}
+      >
+        Advanced AI settings →
+      </button>
       {requiresApiKey(settings.llm_provider) && (
         <div className="grid gap-2">
           <Label htmlFor="llm_api_key">
@@ -313,13 +320,6 @@ export const Settings = ({ onNavigateAdvanced }: SettingsProps) => {
             ? "Saved"
             : "Save"}
       </Button>
-      <button
-        type="button"
-        className="text-sm text-muted-foreground hover:text-foreground text-left"
-        onClick={onNavigateAdvanced}
-      >
-        Advanced AI settings →
-      </button>
     </div>
   );
 };

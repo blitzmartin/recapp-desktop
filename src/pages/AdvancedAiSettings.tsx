@@ -22,22 +22,22 @@ export const DEFAULT_PROMPT_TEMPLATE =
   "Do not summarize episode by episode or list events one by one, and do not invent details beyond what's in the synopses.";
 
 const precisionLabels: Record<PrecisionSetting["kind"], string> = {
-  precise: "Preciso",
-  balanced: "Bilanciato",
-  creative: "Creativo",
+  precise: "Precise",
+  balanced: "Balanced",
+  creative: "Creative",
   custom: "Custom",
 };
 
 const lengthLabels: Record<LengthSetting["kind"], string> = {
-  short: "Breve (~50 parole)",
-  medium: "Medio (~100 parole)",
-  long: "Lungo (~200 parole)",
+  short: "Short (~50 words)",
+  medium: "Medium (~100 words)",
+  long: "Long (~200 words)",
   custom: "Custom",
 };
 
 const validatePrompt = (template: string): string | null => {
   if (!template.includes("{series_title}") || !template.includes("{language}")) {
-    return "Il prompt deve contenere i placeholder {series_title} e {language}.";
+    return "The prompt must contain the {series_title} and {language} placeholders.";
   }
   return null;
 };
@@ -86,8 +86,8 @@ export const AdvancedAiSettings = () => {
       <div className="grid gap-2">
         <Label htmlFor="prompt">Prompt:</Label>
         <p className="text-xs text-muted-foreground">
-          Il prompt inviato all'LLM per generare il recap. Usa i placeholder{" "}
-          <code>{"{series_title}"}</code>, <code>{"{language}"}</code> e{" "}
+          The prompt sent to the LLM to generate the recap. Use the placeholders{" "}
+          <code>{"{series_title}"}</code>, <code>{"{language}"}</code>, and{" "}
           <code>{"{num_words}"}</code>.
         </p>
         <Textarea
@@ -110,10 +110,10 @@ export const AdvancedAiSettings = () => {
       </div>
 
       <div className="grid gap-2">
-        <Label>Precisione:</Label>
+        <Label>Precision:</Label>
         <p className="text-xs text-muted-foreground">
-          Controlla quanto l'LLM si attiene ai fatti (Preciso) o quanto elabora liberamente
-          (Creativo).
+          Controls how closely the LLM sticks to the facts (Precise) versus how freely it
+          elaborates (Creative).
         </p>
         <Select
           value={settings.precision.kind}
@@ -153,9 +153,9 @@ export const AdvancedAiSettings = () => {
       </div>
 
       <div className="grid gap-2">
-        <Label>Lunghezza:</Label>
+        <Label>Length:</Label>
         <p className="text-xs text-muted-foreground">
-          Lunghezza approssimativa del recap generato, in parole.
+          Approximate length of the generated recap, in words.
         </p>
         <Select
           value={settings.length.kind}
