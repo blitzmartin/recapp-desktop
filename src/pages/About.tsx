@@ -80,6 +80,33 @@ export const About = () => {
         </ul>
       </section>
 
+      <section className="flex flex-col gap-2">
+        <h2 className="text-lg font-semibold text-primary">
+          Advanced AI settings
+        </h2>
+        <p className="text-muted-foreground">
+          From the Settings screen, "Advanced AI settings" opens further
+          controls over how recaps are generated:
+        </p>
+        <ul className="flex flex-col gap-2 text-muted-foreground">
+          <li>
+            <span className="font-medium text-foreground">Prompt</span> — the
+            template sent to the LLM, editable as long as it keeps the{" "}
+            <code>{"{series_title}"}</code> and <code>{"{language}"}</code>{" "}
+            placeholders. Reset to the built-in default at any time.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">Precision</span> —
+            how closely the LLM sticks to the synopses versus how freely it
+            elaborates: Precise, Balanced, Creative, or a custom value.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">Length</span> — the
+            target recap length: Short, Medium, Long, or a custom word count.
+          </li>
+        </ul>
+      </section>
+
       <p className="text-xs text-muted-foreground text-center">
         <button
           type="button"

@@ -26,6 +26,12 @@ Recapp doesn't ship with any API keys. You configure everything yourself from th
   - **OpenAI**, **Anthropic**, **Gemini**, or **DeepSeek** (remote). Pick the provider, enter the model name (a sensible default is prefilled) and your API key. Get a key from [OpenAI](https://platform.openai.com/api-keys), [Anthropic](https://console.anthropic.com/settings/keys), [Google AI Studio](https://aistudio.google.com/apikey), or [DeepSeek](https://platform.deepseek.com/api_keys) respectively. Usage is billed by that provider according to their pricing.
 - **Default language**. The language recaps are translated into. Default lang is English which needs no translation step; any other language currently routes through Ollama for translation regardless of which provider you picked for summarization.
 
+From Settings, "Advanced AI settings →" opens further controls over recap generation:
+
+- **Prompt**. The template sent to the LLM, editable as long as it keeps the `{series_title}` and `{language}` placeholders (`{num_words}` is also available). Resettable to the built-in default.
+- **Precision**. How closely the LLM sticks to the source synopses versus how freely it elaborates: Precise, Balanced, Creative, or a custom value.
+- **Length**. Target recap length: Short (~50 words), Medium (~100 words), Long (~200 words), or a custom word count.
+
 Settings (provider choice, models, TMDB key, default language) are stored locally on your machine in a JSON file in your OS's app config directory. Remote LLM API keys are **not** stored in that file — they're saved in your OS's secure credential store (Keychain on macOS, Credential Manager on Windows) via the system keyring, and only read from there when a request needs them. Nothing is sent anywhere except requests to TMDB, to your chosen LLM provider, and to your local Ollama instance for translation.
 
 ## Installing a prebuilt release
