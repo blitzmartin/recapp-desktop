@@ -95,4 +95,50 @@ impl LlmProvider for GeminiProvider {
             Ok(summary)
         }
     }
+
+    async fn translate(
+        &self,
+        text: &str,
+        source_language: &str,
+        target_language: &str,
+    ) -> Result<String, String> {
+        let prompt = super::build_translate_prompt(text, source_language, target_language);
+
+        let url = format!(
+            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+            self.model, self.api_key
+        );
+
+        let response = reqwest::Client::new()
+            .post(url)
+            .json(&GenerateRequest {
+                contents: vec![Content {
+                    parts: vec![Part { text: prompt }],
+                }],
+            })
+            .send()
+            .await
+            .map_err(|e| format!("Gemini translation failed: {e}"))?;
+
+        let response = super::ensure_success(response, "Gemini").await?;
+
+        let parsed: GenerateResponse = response
+            .json()
+            .await
+            .map_err(|e| format!("Gemini translation failed: {e}"))?;
+
+        let translated = parsed
+            .candidates
+            .into_iter()
+            .next()
+            .and_then(|c| c.content.parts.into_iter().next())
+            .map(|p| p.text.trim().to_string())
+            .unwrap_or_default();
+
+        if translated.is_empty() {
+            Ok(text.to_string())
+        } else {
+            Ok(translated)
+        }
+    }
 }

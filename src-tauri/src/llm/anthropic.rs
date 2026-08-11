@@ -84,4 +84,50 @@ impl LlmProvider for AnthropicProvider {
             Ok(summary)
         }
     }
+
+    async fn translate(
+        &self,
+        text: &str,
+        source_language: &str,
+        target_language: &str,
+    ) -> Result<String, String> {
+        let prompt = super::build_translate_prompt(text, source_language, target_language);
+
+        let response = reqwest::Client::new()
+            .post("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", &self.api_key)
+            .header("anthropic-version", "2023-06-01")
+            .json(&MessagesRequest {
+                model: self.model.clone(),
+                system: String::new(),
+                messages: vec![Message {
+                    role: "user",
+                    content: prompt,
+                }],
+                max_tokens: 1024,
+            })
+            .send()
+            .await
+            .map_err(|e| format!("Anthropic translation failed: {e}"))?;
+
+        let response = super::ensure_success(response, "Anthropic").await?;
+
+        let parsed: MessagesResponse = response
+            .json()
+            .await
+            .map_err(|e| format!("Anthropic translation failed: {e}"))?;
+
+        let translated = parsed
+            .content
+            .into_iter()
+            .next()
+            .map(|c| c.text.trim().to_string())
+            .unwrap_or_default();
+
+        if translated.is_empty() {
+            Ok(text.to_string())
+        } else {
+            Ok(translated)
+        }
+    }
 }

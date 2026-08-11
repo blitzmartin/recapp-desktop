@@ -21,6 +21,13 @@ pub trait LlmProvider {
         language: &str,
         num_words: u32,
     ) -> Result<String, String>;
+
+    async fn translate(
+        &self,
+        text: &str,
+        source_language: &str,
+        target_language: &str,
+    ) -> Result<String, String>;
 }
 
 /// Shared task instructions, without the source synopses (Anthropic sends
@@ -47,6 +54,15 @@ pub(crate) fn build_prompt(series_title: &str, text: &str, language: &str, num_w
     format!(
         "{}\n\nEpisode synopses:\n\"{text}\"",
         build_instructions(series_title, language, num_words)
+    )
+}
+
+/// Prompt used by every provider's `translate`, so the wording (and the
+/// "no explanation" instruction that keeps the reply free of preamble) is
+/// defined once instead of duplicated per provider.
+pub(crate) fn build_translate_prompt(text: &str, source_language: &str, target_language: &str) -> String {
+    format!(
+        "Translate the following text from {source_language} to {target_language}. Provide only the translated text without any explanation:\n\n\"{text}\""
     )
 }
 
@@ -103,6 +119,21 @@ impl AnyLlmProvider {
             Self::Anthropic(p) => p.summarize(series_title, text, language, num_words).await,
             Self::Gemini(p) => p.summarize(series_title, text, language, num_words).await,
             Self::DeepSeek(p) => p.summarize(series_title, text, language, num_words).await,
+        }
+    }
+
+    pub async fn translate(
+        &self,
+        text: &str,
+        source_language: &str,
+        target_language: &str,
+    ) -> Result<String, String> {
+        match self {
+            Self::Ollama(p) => p.translate(text, source_language, target_language).await,
+            Self::OpenAi(p) => p.translate(text, source_language, target_language).await,
+            Self::Anthropic(p) => p.translate(text, source_language, target_language).await,
+            Self::Gemini(p) => p.translate(text, source_language, target_language).await,
+            Self::DeepSeek(p) => p.translate(text, source_language, target_language).await,
         }
     }
 }

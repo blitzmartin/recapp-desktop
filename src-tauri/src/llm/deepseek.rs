@@ -84,4 +84,47 @@ impl LlmProvider for DeepSeekProvider {
             Ok(summary)
         }
     }
+
+    async fn translate(
+        &self,
+        text: &str,
+        source_language: &str,
+        target_language: &str,
+    ) -> Result<String, String> {
+        let prompt = super::build_translate_prompt(text, source_language, target_language);
+
+        let response = reqwest::Client::new()
+            .post("https://api.deepseek.com/chat/completions")
+            .bearer_auth(&self.api_key)
+            .json(&ChatRequest {
+                model: self.model.clone(),
+                messages: vec![ChatMessage {
+                    role: "user",
+                    content: prompt,
+                }],
+            })
+            .send()
+            .await
+            .map_err(|e| format!("DeepSeek translation failed: {e}"))?;
+
+        let response = super::ensure_success(response, "DeepSeek").await?;
+
+        let parsed: ChatResponse = response
+            .json()
+            .await
+            .map_err(|e| format!("DeepSeek translation failed: {e}"))?;
+
+        let translated = parsed
+            .choices
+            .into_iter()
+            .next()
+            .map(|c| c.message.content.trim().to_string())
+            .unwrap_or_default();
+
+        if translated.is_empty() {
+            Ok(text.to_string())
+        } else {
+            Ok(translated)
+        }
+    }
 }

@@ -3,7 +3,6 @@ mod llm;
 mod secrets;
 mod settings;
 mod tmdb;
-mod translator;
 mod types;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

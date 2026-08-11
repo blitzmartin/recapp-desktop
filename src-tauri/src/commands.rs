@@ -1,7 +1,6 @@
 use crate::llm;
 use crate::settings::AppSettings;
 use crate::tmdb;
-use crate::translator::{ollama::OllamaTranslator, Translator};
 use crate::types::{BackendResponse, Episode, Language, SearchData, Timerange};
 
 async fn translate_if_needed(
@@ -13,8 +12,8 @@ async fn translate_if_needed(
         return Ok(text);
     }
 
-    let translator = OllamaTranslator::new(settings.ollama_url.clone(), settings.ollama_model.clone());
-    translator
+    let provider = llm::build_provider(settings)?;
+    provider
         .translate(&text, Language::En.full_name(), language.full_name())
         .await
         .map_err(|e| {
